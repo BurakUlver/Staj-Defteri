@@ -1,0 +1,95 @@
+import matplotlib.pyplot as plt
+import numpy as np
+from sklearn import datasets, linear_model,svm
+from sklearn.metrics import mean_squared_error, r2_score
+import mysql.connector
+from matplotlib import style
+style.use('ggplot')
+
+connection = mysql.connector.connect(host='localhost',
+                              port=3306,
+                              user='root',
+                              password='1234',
+                              
+                              database='new_schema')
+
+
+query = connection.cursor()
+
+x_view = 'SELECT value_date FROM new_schema.graph ;'
+y_view = 'SELECT value FROM new_schema.graph;'
+
+query.execute(x_view)
+X = query.fetchall()
+
+query.execute(y_view)
+y = query.fetchall()
+
+numrows = query.rowcount
+
+# Load the diabetes dataset
+arr_X = np.zeros((numrows,1),dtype=int)
+
+
+j = 0
+for i in range(0,numrows):
+    arr_X[j] = X[i]
+    j += 1
+    
+
+# Split the data into training/testing sets
+arr_X_train = np.array(arr_X[:-6])
+arr_X_test = np.array(arr_X[-6:])
+print(arr_X_test)
+
+
+
+
+
+
+# Split the targets into training/testing sets
+arr_y = np.zeros((numrows, 1), dtype=int)
+
+j = 0
+for i in range(0, numrows):
+    arr_y[j] = y[i]
+    j += 1
+
+arr_y_train = np.array(arr_y[:-6])
+arr_y_test = np.array(arr_y[-6:])
+print(arr_y_test)
+
+
+
+# Create linear regression object
+regr = svm.LinearSVC()
+
+# Train the model using the training sets
+regr.fit(arr_X_train, arr_y_train.ravel())
+
+# Make predictions using the testing set
+arr_y_pred = regr.predict(arr_X_test)
+
+# The coefficients
+print('Coefficients: \n', regr.coef_)
+# The mean squared error
+print("Mean squared error: %.2f"
+      % mean_squared_error(arr_y_test, arr_y_pred))
+# Explained variance score: 1 is perfect prediction
+print('Variance score: %.2f' % r2_score(arr_y_test, arr_y_pred))
+
+# Plot outputs
+plt.plot(X,y , label='Data', color='r', linewidth=7)
+plt.plot(arr_X_test, arr_y_test,label='Test',  color='black' ,linewidth=2)
+plt.plot(arr_X_test, arr_y_pred, label='Prediction', color='blue', linewidth=3)
+plt.xlabel('Hafta')
+plt.ylabel('Defect Sayısı')
+plt.title('Genel Defect Durumu')
+plt.legend()
+
+plt.show()
+
+
+connection.close()
+
+
